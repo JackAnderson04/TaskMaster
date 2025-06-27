@@ -1,0 +1,113 @@
+<%
+  # Set defaults for local variables
+  compact ||= false
+  show_actions ||= true
+%>
+
+<div class="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow <%= 'border-l-4' unless compact %> 
+     <%= 'border-l-blue-500' if event.event_type == 'workout' && !compact %>
+     <%= 'border-l-green-500' if event.event_type == 'meeting' && !compact %>
+     <%= 'border-l-purple-500' if event.event_type == 'personal' && !compact %>
+     <%= 'border-l-gray-500' if event.event_type == 'work' && !compact %>
+     <%= 'border-l-orange-500' if event.event_type == 'other' && !compact %>">
+  
+  <div class="flex items-start justify-between">
+    <div class="flex-1">
+      <!-- Event Title and Type -->
+      <div class="flex items-center space-x-2 mb-2">
+        <%= link_to event_path(event), class: "font-medium text-gray-900 hover:text-blue-600 transition-colors #{'text-sm' if compact}" do %>
+          <%= event.title %>
+        <% end %>
+        
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                     <%= 'bg-blue-100 text-blue-800' if event.event_type == 'workout' %>
+                     <%= 'bg-green-100 text-green-800' if event.event_type == 'meeting' %>
+                     <%= 'bg-purple-100 text-purple-800' if event.event_type == 'personal' %>
+                     <%= 'bg-gray-100 text-gray-800' if event.event_type == 'work' %>
+                     <%= 'bg-orange-100 text-orange-800' if event.event_type == 'other' %>">
+          <%= event.event_type.capitalize %>
+        </span>
+        
+        <!-- Status indicator -->
+        <% if event.completed? %>
+          <span class="inline-flex items-center">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+          </span>
+        <% end %>
+      </div>
+
+      <!-- Time Information -->
+      <div class="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+        <div class="flex items-center space-x-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span><%= event.start_time.strftime("%I:%M %p") %></span>
+        </div>
+        
+        <div class="flex items-center space-x-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <span><%= event.start_time.strftime("%b %d") %></span>
+        </div>
+        
+        <% if event.duration_in_hours > 0 %>
+          <div class="flex items-center space-x-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span><%= pluralize(event.duration_in_hours, 'hour') %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Description (only show if not compact and description exists) -->
+      <% if !compact && event.description.present? %>
+        <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+          <%= truncate(event.description, length: 100) %>
+        </p>
+      <% end %>
+
+      <!-- Status Badge -->
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                     <%= 'bg-green-100 text-green-800' if event.status == 'completed' %>
+                     <%= 'bg-blue-100 text-blue-800' if event.status == 'ongoing' %>
+                     <%= 'bg-yellow-100 text-yellow-800' if event.status == 'upcoming' %>
+                     <%= 'bg-gray-100 text-gray-800' if event.status == 'past' %>">
+          <%= event.status.capitalize %>
+        </span>
+      </div>
+    </div>
+
+    <!-- Actions (only show if not compact and show_actions is true) -->
+    <% if !compact && show_actions %>
+      <div class="flex items-center space-x-2 ml-4">
+        <%= link_to toggle_complete_event_path(event), method: :patch, 
+            class: "p-2 text-gray-400 hover:text-green-600 transition-colors" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        <% end %>
+        
+        <%= link_to edit_event_path(event), 
+            class: "p-2 text-gray-400 hover:text-blue-600 transition-colors" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+        <% end %>
+        
+        <%= link_to event_path(event), method: :delete, 
+            data: { confirm: 'Are you sure?' },
+            class: "p-2 text-gray-400 hover:text-red-600 transition-colors" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

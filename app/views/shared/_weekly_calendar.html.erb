@@ -1,0 +1,143 @@
+<%
+  today = Date.current
+  start_of_week = today.beginning_of_week(:sunday)
+  end_of_week = today.end_of_week(:sunday)
+  week_days = (start_of_week..end_of_week).to_a
+  time_slots = (7..21).map { |hour| "#{hour}:00" }
+%>
+
+<div class="p-6">
+  <!-- Calendar Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-white">Weekly View</h2>
+      <p class="text-gray-400 text-sm mt-1">
+        <%= start_of_week.strftime("%B %d") %> - <%= end_of_week.strftime("%B %d, %Y") %>
+      </p>
+    </div>
+    
+    <!-- Week Navigation -->
+    <div class="flex items-center space-x-2">
+      <%= link_to "?week=#{(start_of_week - 1.week).strftime('%Y-%m-%d')}", 
+          class: "p-2 hover:bg-gray-700 rounded-lg transition-colors" do %>
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      <% end %>
+      
+      <button class="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors">
+        Today
+      </button>
+      
+      <%= link_to "?week=#{(start_of_week + 1.week).strftime('%Y-%m-%d')}", 
+          class: "p-2 hover:bg-gray-700 rounded-lg transition-colors" do %>
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Calendar Grid -->
+  <div class="overflow-x-auto">
+    <div class="min-w-full">
+      <!-- Days Header -->
+      <div class="grid grid-cols-8 gap-px mb-4">
+        <!-- Time column header -->
+        <div class="text-center text-sm font-medium text-gray-400 py-3"></div>
+        
+        <!-- Day headers -->
+        <% week_days.each do |date| %>
+          <div class="text-center py-3 <%= 'bg-blue-600/20 rounded-lg' if date == today %>">
+            <div class="text-sm font-medium text-gray-300">
+              <%= date.strftime("%a") %>
+            </div>
+            <div class="text-lg font-bold <%= 'text-blue-400' if date == today %> <%= 'text-white' unless date == today %>">
+              <%= date.day %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Time Grid -->
+      <div class="relative">
+        <% time_slots.each_with_index do |time_slot, slot_index| %>
+          <div class="grid grid-cols-8 gap-px mb-px">
+            <!-- Time Label -->
+            <div class="text-right pr-4 py-4 text-sm text-gray-400 font-medium">
+              <%= time_slot %>
+            </div>
+            
+            <!-- Day Columns -->
+            <% week_days.each_with_index do |date, day_index| %>
+              <%
+                # Get events for this specific hour and date
+                hour = time_slot.split(':')[0].to_i
+                slot_start = date.beginning_of_day + hour.hours
+                slot_end = slot_start + 1.hour
+                
+                day_events = events.select do |event|
+                  event.start_time.to_date == date &&
+                  event.start_time >= slot_start &&
+                  event.start_time < slot_end
+                end
+              %>
+              
+              <div class="relative min-h-[60px] border border-gray-700 hover:bg-gray-700/30 transition-colors group cursor-pointer"
+                   data-date="<%= date.strftime('%Y-%m-%d') %>"
+                   data-time="<%= hour %>">
+                
+                <!-- Events in this time slot -->
+                <% day_events.each_with_index do |event, event_index| %>
+                  <%= link_to event_path(event), 
+                      class: "absolute inset-x-1 top-1 z-10 p-2 rounded text-xs font-medium transition-all hover:shadow-lg
+                             #{'bg-blue-500 text-white' if event.event_type == 'workout'}
+                             #{'bg-green-500 text-white' if event.event_type == 'meeting'}
+                             #{'bg-purple-500 text-white' if event.event_type == 'personal'}
+                             #{'bg-gray-600 text-white' if event.event_type == 'work'}
+                             #{'bg-orange-500 text-white' if event.event_type == 'other'}" do %>
+                    <div class="font-semibold truncate"><%= event.title %></div>
+                    <div class="text-xs opacity-75">
+                      <%= event.start_time.strftime("%I:%M %p") %>
+                    </div>
+                  <% end %>
+                <% end %>
+                
+                <!-- Add event button (shows on hover) -->
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <%= link_to new_event_path(date: date.strftime('%Y-%m-%d'), time: hour), 
+                      class: "w-6 h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xs transition-colors" do %>
+                    +
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Time Indicator -->
+  <% if start_of_week <= today && today <= end_of_week %>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinutes = now.getMinutes();
+        
+        if (currentHour >= 7 && currentHour <= 21) {
+          const timeSlotIndex = currentHour - 7;
+          const minutePercentage = currentMinutes / 60;
+          const topPosition = (timeSlotIndex + minutePercentage) * 61; // 60px height + 1px gap
+          
+          const currentTimeLine = document.createElement('div');
+          currentTimeLine.className = 'absolute left-20 right-0 h-0.5 bg-red-500 z-20 pointer-events-none';
+          currentTimeLine.style.top = topPosition + 140 + 'px'; // Account for header height
+          
+          document.querySelector('.relative').appendChild(currentTimeLine);
+        }
+      });
+    </script>
+  <% end %>
+</div>
