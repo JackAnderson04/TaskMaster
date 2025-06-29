@@ -1,2 +1,129 @@
-<h1>Events#new</h1>
-<p>Find me in app/views/events/new.html.erb</p>
+<!-- Page Header -->
+<div class="mb-8">
+  <div class="flex items-center space-x-4">
+    <%= link_to events_path, class: "text-gray-400 hover:text-white transition-colors" do %>
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    <% end %>
+    <div>
+      <h1 class="text-3xl font-bold text-white">Create New Event</h1>
+      <p class="text-gray-400 mt-2">Add a new event to your schedule</p>
+    </div>
+  </div>
+</div>
+
+<!-- Form Container -->
+<div class="max-w-2xl">
+  <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-8">
+    <%= form_with model: @event, local: true, class: "space-y-6" do |form| %>
+      
+      <!-- Display errors if any -->
+      <% if @event.errors.any? %>
+        <div class="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
+          <h4 class="font-medium mb-2">Please fix the following errors:</h4>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <% @event.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <!-- Title -->
+      <div>
+        <%= form.label :title, class: "block text-sm font-medium text-gray-300 mb-2" %>
+        <%= form.text_field :title, 
+            class: "w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors",
+            placeholder: "Enter event title..." %>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <%= form.label :description, class: "block text-sm font-medium text-gray-300 mb-2" %>
+        <%= form.text_area :description, 
+            rows: 4,
+            class: "w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors",
+            placeholder: "Add a description (optional)..." %>
+      </div>
+
+      <!-- Event Type -->
+      <div>
+        <%= form.label :event_type, class: "block text-sm font-medium text-gray-300 mb-2" %>
+        <%= form.select :event_type, 
+            options_for_select([
+              ['Workout', 'workout'],
+              ['Meeting', 'meeting'],
+              ['Personal', 'personal'],
+              ['Work', 'work'],
+              ['Other', 'other']
+            ], @event.event_type),
+            { prompt: 'Select event type...' },
+            { class: "w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" } %>
+      </div>
+
+      <!-- Date and Time Row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Start Time -->
+        <div>
+          <%= form.label :start_time, class: "block text-sm font-medium text-gray-300 mb-2" %>
+          <%= form.datetime_local_field :start_time,
+              class: "w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" %>
+        </div>
+
+        <!-- End Time -->
+        <div>
+          <%= form.label :end_time, class: "block text-sm font-medium text-gray-300 mb-2" %>
+          <%= form.datetime_local_field :end_time,
+              class: "w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" %>
+        </div>
+      </div>
+
+      <!-- Completed Checkbox -->
+      <div class="flex items-center">
+        <%= form.check_box :completed, 
+            class: "w-4 h-4 text-orange-600 bg-gray-700 border-gray-600 rounded focus:ring-orange-500 focus:ring-2" %>
+        <%= form.label :completed, "Mark as completed", 
+            class: "ml-2 text-sm font-medium text-gray-300" %>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex items-center justify-between pt-6 border-t border-gray-700">
+        <div class="flex space-x-3">
+          <%= link_to events_path, 
+              class: "px-4 py-2 text-gray-300 hover:text-white transition-colors" do %>
+            Cancel
+          <% end %>
+        </div>
+        
+        <div class="flex space-x-3">
+          <%= form.submit "Create Event", 
+              class: "px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors shadow-lg" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Auto-populate end time based on start time -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const startTimeInput = document.getElementById('event_start_time');
+  const endTimeInput = document.getElementById('event_end_time');
+  
+  startTimeInput.addEventListener('change', function() {
+    if (this.value && !endTimeInput.value) {
+      const startTime = new Date(this.value);
+      const endTime = new Date(startTime.getTime() + (60 * 60 * 1000)); //end time specific 1 hour after begin, user must specify otherwise
+      
+      const year = endTime.getFullYear();
+      const month = String(endTime.getMonth() + 1).padStart(2, '0');
+      const day = String(endTime.getDate()).padStart(2, '0');
+      const hours = String(endTime.getHours()).padStart(2, '0');
+      const minutes = String(endTime.getMinutes()).padStart(2, '0');
+      
+      endTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+  });
+});
+</script>

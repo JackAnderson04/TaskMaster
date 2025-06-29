@@ -1,12 +1,4 @@
 Rails.application.routes.draw do
-  get "events/index"
-  get "events/show"
-  get "events/new"
-  get "events/create"
-  get "events/edit"
-  get "events/update"
-  get "events/destroy"
-  get "home/index"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   root 'home#index'

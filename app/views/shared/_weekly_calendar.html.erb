@@ -3,7 +3,7 @@
   start_of_week = today.beginning_of_week(:sunday)
   end_of_week = today.end_of_week(:sunday)
   week_days = (start_of_week..end_of_week).to_a
-  time_slots = (7..21).map { |hour| "#{hour}:00" }
+  time_slots = (0..23).map { |hour| "#{hour.to_s.rjust(2, '0')}:00" }  # Show all 24 hours
 %>
 
 <div class="p-6">
@@ -25,7 +25,8 @@
         </svg>
       <% end %>
       
-      <button class="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors">
+      <button class="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
+              onclick="window.location.href = '<%= request.path %>'">
         Today
       </button>
       
@@ -39,10 +40,10 @@
   </div>
 
   <!-- Calendar Grid -->
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
     <div class="min-w-full">
       <!-- Days Header -->
-      <div class="grid grid-cols-8 gap-px mb-4">
+      <div class="grid grid-cols-8 gap-px mb-4 sticky top-0 bg-gray-900 z-10">
         <!-- Time column header -->
         <div class="text-center text-sm font-medium text-gray-400 py-3"></div>
         
@@ -64,52 +65,87 @@
         <% time_slots.each_with_index do |time_slot, slot_index| %>
           <div class="grid grid-cols-8 gap-px mb-px">
             <!-- Time Label -->
-            <div class="text-right pr-4 py-4 text-sm text-gray-400 font-medium">
+            <div class="text-right pr-4 py-4 text-sm text-gray-400 font-medium sticky left-0 bg-gray-900">
               <%= time_slot %>
             </div>
             
             <!-- Day Columns -->
             <% week_days.each_with_index do |date, day_index| %>
               <%
-                # Get events for this specific hour and date
+                #get events for this specific hour and date
                 hour = time_slot.split(':')[0].to_i
                 slot_start = date.beginning_of_day + hour.hours
                 slot_end = slot_start + 1.hour
                 
+                #find events that overlap with this time slot
                 day_events = events.select do |event|
                   event.start_time.to_date == date &&
-                  event.start_time >= slot_start &&
-                  event.start_time < slot_end
+                  event.start_time < slot_end &&
+                  event.end_time > slot_start
+                end
+                
+                #check if this is the first slot for multi-hour events
+                first_slot_events = day_events.select do |event|
+                  event.start_time >= slot_start && event.start_time < slot_end
                 end
               %>
               
-              <div class="relative min-h-[60px] border border-gray-700 hover:bg-gray-700/30 transition-colors group cursor-pointer"
+              <div class="relative min-h-[50px] border border-gray-700 hover:bg-gray-700/30 transition-colors group cursor-pointer"
                    data-date="<%= date.strftime('%Y-%m-%d') %>"
                    data-time="<%= hour %>">
                 
-                <!-- Events in this time slot -->
-                <% day_events.each_with_index do |event, event_index| %>
+                <!-- Events in this time slot (only show in first slot of event) -->
+                <% first_slot_events.each_with_index do |event, event_index| %>
+                  <%
+                    #event height based on duration
+                    event_duration_hours = ((event.end_time - event.start_time) / 1.hour).ceil
+                    event_height = [event_duration_hours * 51, 51].max # 50px + 1px border, minimum 51px
+                    
+                    #width and position for multiple events in same slot
+                    total_events = first_slot_events.count
+                    event_width = total_events > 1 ? (100 / total_events) : 100
+                    event_left = total_events > 1 ? (event_index * event_width) : 0
+                  %>
                   <%= link_to event_path(event), 
-                      class: "absolute inset-x-1 top-1 z-10 p-2 rounded text-xs font-medium transition-all hover:shadow-lg
-                             #{'bg-blue-500 text-white' if event.event_type == 'workout'}
-                             #{'bg-green-500 text-white' if event.event_type == 'meeting'}
-                             #{'bg-purple-500 text-white' if event.event_type == 'personal'}
-                             #{'bg-gray-600 text-white' if event.event_type == 'work'}
-                             #{'bg-orange-500 text-white' if event.event_type == 'other'}" do %>
+                      class: "absolute top-1 z-10 p-2 rounded text-xs font-medium transition-all hover:shadow-lg overflow-hidden event-card
+                             #{'bg-blue-500 text-white hover:bg-blue-600' if event.event_type == 'workout'}
+                             #{'bg-green-500 text-white hover:bg-green-600' if event.event_type == 'meeting'}
+                             #{'bg-purple-500 text-white hover:bg-purple-600' if event.event_type == 'personal'}
+                             #{'bg-gray-600 text-white hover:bg-gray-700' if event.event_type == 'work'}
+                             #{'bg-orange-500 text-white hover:bg-orange-600' if event.event_type == 'other'}",
+                      style: "height: #{event_height}px; width: calc(#{event_width}% - 2px); left: calc(#{event_left}% + 2px);",
+                      onclick: "event.stopPropagation();" do %>
                     <div class="font-semibold truncate"><%= event.title %></div>
                     <div class="text-xs opacity-75">
-                      <%= event.start_time.strftime("%I:%M %p") %>
+                      <%= event.start_time.strftime("%I:%M") %>
+                      <% if total_events == 1 %>
+                        - <%= event.end_time.strftime("%I:%M %p") %>
+                      <% end %>
                     </div>
+                    <% if event.duration_in_hours > 1 && total_events == 1 %>
+                      <div class="text-xs opacity-60">
+                        <%= pluralize(event.duration_in_hours, 'hr') %>
+                      </div>
+                    <% end %>
                   <% end %>
                 <% end %>
                 
-                <!-- Add event button (shows on hover) -->
-                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <%= link_to new_event_path(date: date.strftime('%Y-%m-%d'), time: hour), 
-                      class: "w-6 h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xs transition-colors" do %>
-                    +
-                  <% end %>
-                </div>
+                <!-- Add event button (shows on hover only when no events or in empty space) -->
+                <% if first_slot_events.empty? %>
+                  <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div class="w-6 h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xs pointer-events-auto">
+                      +
+                    </div>
+                  </div>
+                <% else %>
+                  <!-- Show + button in top right corner when there are existing events -->
+                  <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                    <div class="w-5 h-5 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xs pointer-events-auto"
+                         onclick="event.stopPropagation(); createEventAtTime('<%= date.strftime('%Y-%m-%d') %>', <%= hour %>);">
+                      +
+                    </div>
+                  </div>
+                <% end %>
               </div>
             <% end %>
           </div>
@@ -118,7 +154,7 @@
     </div>
   </div>
 
-  <!-- Current Time Indicator -->
+  <!-- Current Time Indicator and JavaScript -->
   <% if start_of_week <= today && today <= end_of_week %>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -126,18 +162,36 @@
         const currentHour = now.getHours();
         const currentMinutes = now.getMinutes();
         
-        if (currentHour >= 7 && currentHour <= 21) {
-          const timeSlotIndex = currentHour - 7;
-          const minutePercentage = currentMinutes / 60;
-          const topPosition = (timeSlotIndex + minutePercentage) * 61; // 60px height + 1px gap
-          
-          const currentTimeLine = document.createElement('div');
-          currentTimeLine.className = 'absolute left-20 right-0 h-0.5 bg-red-500 z-20 pointer-events-none';
-          currentTimeLine.style.top = topPosition + 140 + 'px'; // Account for header height
-          
-          document.querySelector('.relative').appendChild(currentTimeLine);
+        const timeSlotIndex = currentHour;
+        const minutePercentage = currentMinutes / 60;
+        const topPosition = (timeSlotIndex + minutePercentage) * 51; // 50px height + 1px gap
+        
+        const currentTimeLine = document.createElement('div');
+        currentTimeLine.className = 'absolute left-20 right-0 h-0.5 bg-red-500 z-20 pointer-events-none';
+        currentTimeLine.style.top = topPosition + 140 + 'px'; // Account for header height
+        
+        const timeGrid = document.querySelector('.relative');
+        if (timeGrid) {
+          timeGrid.appendChild(currentTimeLine);
         }
+        
+        //event listeners for calendar cells, users are able to click anywhere to add an event more seamlessly
+        document.querySelectorAll('[data-date][data-time]').forEach(cell => {
+          cell.addEventListener('click', function(e) {
+            //if the user clicks an event, we want to see details. if a user clicks +, create new overlapping event
+            if (!e.target.closest('.event-card') && !e.target.closest('[onclick*="createEventAtTime"]')) {
+              const date = this.getAttribute('data-date');
+              const hour = this.getAttribute('data-time');
+              createEventAtTime(date, hour);
+            }
+          });
+        });
       });
+      
+      function createEventAtTime(date, hour) {
+        const url = '<%= new_event_path %>' + '?date=' + date + '&time=' + hour;
+        window.location.href = url;
+      }
     </script>
   <% end %>
 </div>

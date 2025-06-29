@@ -25,9 +25,19 @@ class EventsController < ApplicationController
   
   def new
     @event = Event.new
-    #default start time is next hour
-    @event.start_time = Time.current.beginning_of_hour + 1.hour
-    @event.end_time = @event.start_time + 1.hour
+    
+    #date and time parameters from calendar clicks
+    if params[:date].present?
+      selected_date = Date.parse(params[:date])
+      hour = params[:time].present? ? params[:time].to_i : Time.current.hour + 1
+      
+      @event.start_time = selected_date.beginning_of_day + hour.hours
+      @event.end_time = @event.start_time + 1.hour
+    else
+      #default start time is next hour
+      @event.start_time = Time.current.beginning_of_hour + 1.hour
+      @event.end_time = @event.start_time + 1.hour
+    end
   end
   
   def create

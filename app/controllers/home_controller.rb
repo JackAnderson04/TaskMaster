@@ -10,6 +10,20 @@ class HomeController < ApplicationController
       start_time: @current_month..@current_month.end_of_month
     ).order(:start_time)
     
+    #weekly calendar data
+    if params[:week].present?
+      selected_week_start = Date.parse(params[:week]).beginning_of_week(:sunday)
+    else
+      selected_week_start = Date.current.beginning_of_week(:sunday)
+    end
+
+    selected_week_end = selected_week_start.end_of_week(:sunday)
+
+    #get events for the selected week
+    @events_this_week = Event.where(
+      start_time: selected_week_start.beginning_of_day..selected_week_end.end_of_day
+    ).order(:start_time)
+
     #quick stats for dashboard
     @stats = {
       total_events: Event.count,

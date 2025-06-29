@@ -1,2 +1,151 @@
-<h1>Events#index</h1>
-<p>Find me in app/views/events/index.html.erb</p>
+<!-- Page Header -->
+<div class="mb-8">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-white">Events</h1>
+      <p class="text-gray-400 mt-2">Manage and track all your events</p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+      <%= link_to new_event_path, 
+          class: "inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors shadow-lg" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        New Event
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 mb-8">
+  <div class="flex flex-wrap items-center gap-4">
+    <!-- Status Filter -->
+    <div class="flex items-center space-x-2">
+      <span class="text-sm font-medium text-gray-300">Status:</span>
+      <div class="flex space-x-1">
+        <%= link_to events_path, 
+            class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:status].blank?} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:status].blank?}" do %>
+          All
+        <% end %>
+        <%= link_to events_path(status: 'upcoming'), 
+            class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:status] == 'upcoming'} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:status] == 'upcoming'}" do %>
+          Upcoming
+        <% end %>
+        <%= link_to events_path(status: 'past'), 
+            class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:status] == 'past'} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:status] == 'past'}" do %>
+          Past
+        <% end %>
+        <%= link_to events_path(status: 'completed'), 
+            class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:status] == 'completed'} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:status] == 'completed'}" do %>
+          Completed
+        <% end %>
+        <%= link_to events_path(status: 'pending'), 
+            class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:status] == 'pending'} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:status] == 'pending'}" do %>
+          Pending
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Type Filter -->
+    <div class="flex items-center space-x-2">
+      <span class="text-sm font-medium text-gray-300">Type:</span>
+      <div class="flex space-x-1">
+        <%= link_to events_path(status: params[:status]), 
+            class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:type].blank?} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:type].blank?}" do %>
+          All Types
+        <% end %>
+        <% @event_types.each do |event_type| %>
+          <%= link_to events_path(type: event_type, status: params[:status]), 
+              class: "px-3 py-1 rounded-lg text-sm transition-colors #{'bg-blue-600 text-white' if params[:type] == event_type} #{'bg-gray-700 text-gray-300 hover:bg-gray-600' unless params[:type] == event_type}" do %>
+            <%= event_type.capitalize %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Events List -->
+<div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+  <% if @events.any? %>
+    <!-- Events Header -->
+    <div class="p-6 border-b border-gray-700">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-white">
+          <%= pluralize(@events.count, 'Event') %>
+          <% if params[:status].present? %>
+            - <%= params[:status].capitalize %>
+          <% end %>
+          <% if params[:type].present? %>
+            - <%= params[:type].capitalize %>
+          <% end %>
+        </h2>
+        <div class="text-sm text-gray-400">
+          Showing <%= @events.count %> events
+        </div>
+      </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="divide-y divide-gray-700">
+      <% @events.each do |event| %>
+        <div class="p-6 hover:bg-gray-750 transition-colors">
+          <%= render 'shared/event_card', event: event, compact: false, show_actions: true %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <!-- Empty State -->
+    <div class="p-12 text-center">
+      <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      <h3 class="text-xl font-semibold text-white mb-2">No events found</h3>
+      <p class="text-gray-400 mb-6">
+        <% if params[:status].present? || params[:type].present? %>
+          Try adjusting your filters or create a new event.
+        <% else %>
+          Get started by creating your first event.
+        <% end %>
+      </p>
+      <%= link_to new_event_path, 
+          class: "inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Create Event
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Quick Stats -->
+<% if @events.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-400"><%= @events.where(event_type: 'workout').count %></div>
+        <div class="text-sm text-gray-400">Workouts</div>
+      </div>
+    </div>
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-400"><%= @events.where(event_type: 'meeting').count %></div>
+        <div class="text-sm text-gray-400">Meetings</div>
+      </div>
+    </div>
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-purple-400"><%= @events.where(event_type: 'personal').count %></div>
+        <div class="text-sm text-gray-400">Personal</div>
+      </div>
+    </div>
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-gray-400"><%= @events.where(event_type: 'work').count %></div>
+        <div class="text-sm text-gray-400">Work</div>
+      </div>
+    </div>
+  </div>
+<% end %>
