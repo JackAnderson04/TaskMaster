@@ -1,54 +1,70 @@
-Taskmaster
+# Taskmaster
+
 A Ruby on Rails task management application.
-Features
 
-Event/task management system
-Task completion tracking
-Clean, simple interface
+## Features
 
-Getting Started
-Prerequisites
+- Event/task management system
+- Task completion tracking
+- Clean, simple interface
+- Mailer reminders
 
-Ruby 3.x
-Rails 8.x
-PostgreSQL 15
+## Getting Started
 
-Installation
+### Prerequisites
 
-Clone the repository:
-bashgit clone https://github.com/JackAnderson04/taskmaster.git
-cd taskmaster
+- Ruby 3.x
+- Rails 8.x
+- PostgreSQL 15
 
-Install dependencies:
-bashbundle install
+### Installation
 
-Set up the database:
-bashbin/rails db:create
-bin/rails db:migrate
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/JackAnderson04/taskmaster.git
+   cd taskmaster
+   ```
 
-Start the server:
-bashbin/rails server
+2. Install dependencies:
+   ```bash
+   bundle install
+   ```
 
-Visit http://localhost:3000 in your browser
+3. Set up the database:
+   ```bash
+   bin/rails db:create
+   bin/rails db:migrate
+   ```
 
-Docker Support
+4. Start the server:
+   ```bash
+   bin/rails server
+   ```
+
+5. Visit `http://localhost:3000` in your browser
+
+## Docker Support
+
 This project includes Docker configuration for easy deployment and development.
-Using Docker
 
-Build and run with Docker Compose:
-bashdocker-compose up --build
+### Using Docker
 
-The application will be available at http://localhost:3000
+1. Build and run with Docker Compose:
+   ```bash
+   docker-compose up --build
+   ```
 
-Development
+2. The application will be available at `http://localhost:3000`
 
-Run tests: bin/rails test
-Access Rails console: bin/rails console
-Generate new migrations: bin/rails generate migration MigrationName
+## Development
 
-Contributing
+- Run tests: `bin/rails test`
+- Access Rails console: `bin/rails console`
+- Generate new migrations: `bin/rails generate migration MigrationName`
 
-Fork the repository
-Create a feature branch
-Make your changes
-Submit a pull request
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
