@@ -12,7 +12,11 @@ class HomeController < ApplicationController
     
     #weekly calendar data
     if params[:week].present?
-      selected_week_start = Date.parse(params[:week]).beginning_of_week(:sunday)
+      begin
+        selected_week_start = Date.parse(params[:week]).beginning_of_week(:sunday)
+      rescue Date::Error
+        selected_week_start = Date.current.beginning_of_month(:sunday)
+      end
     else
       selected_week_start = Date.current.beginning_of_week(:sunday)
     end

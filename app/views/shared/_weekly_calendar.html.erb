@@ -1,9 +1,25 @@
 <%
   today = Date.current
-  start_of_week = today.beginning_of_week(:sunday)
-  end_of_week = today.end_of_week(:sunday)
+  
+  #week navigation
+  if params[:week].present?
+    begin
+      selected_week_start = Date.parse(params[:week]).beginning_of_week(:sunday)
+    rescue Date::Error
+      selected_week_start = today.beginning_of_week(:sunday)
+    end
+  else
+    selected_week_start = today.beginning_of_week(:sunday)
+  end
+  
+  start_of_week = selected_week_start
+  end_of_week = selected_week_start.end_of_week(:sunday)
   week_days = (start_of_week..end_of_week).to_a
   time_slots = (0..23).map { |hour| "#{hour.to_s.rjust(2, '0')}:00" }  # Show all 24 hours
+  
+  prev_week_url = request.path + "?week=#{(start_of_week - 1.week).strftime('%Y-%m-%d')}" #adjust navigation URL
+  next_week_url = request.path + "?week=#{(start_of_week + 1.week).strftime('%Y-%m-%d')}"
+  today_url = request.path
 %>
 
 <div class="p-6">
@@ -43,13 +59,13 @@
   <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
     <div class="min-w-full">
       <!-- Days Header -->
-      <div class="grid grid-cols-8 gap-px mb-4 sticky top-0 bg-gray-900 z-10">
+      <div class="grid grid-cols-8 gap-px mb-4 sticky top-0 bg-gray-900 z-30 border-b border-gray-700 pb-2">
         <!-- Time column header -->
-        <div class="text-center text-sm font-medium text-gray-400 py-3"></div>
+        <div class="text-center text-sm font-medium text-gray-400 py-3 bg-gray-900"></div>
         
         <!-- Day headers -->
         <% week_days.each do |date| %>
-          <div class="text-center py-3 <%= 'bg-blue-600/20 rounded-lg' if date == today %>">
+          <div class="text-center py-3 bg-gray-900 <%= 'bg-blue-600/20 rounded-lg' if date == today %>">
             <div class="text-sm font-medium text-gray-300">
               <%= date.strftime("%a") %>
             </div>
@@ -65,7 +81,7 @@
         <% time_slots.each_with_index do |time_slot, slot_index| %>
           <div class="grid grid-cols-8 gap-px mb-px">
             <!-- Time Label -->
-            <div class="text-right pr-4 py-4 text-sm text-gray-400 font-medium sticky left-0 bg-gray-900">
+            <div class="text-right pr-4 py-4 text-sm text-gray-400 font-medium sticky left-0 bg-gray-900 z-20">
               <%= time_slot %>
             </div>
             
@@ -113,7 +129,7 @@
                              #{'bg-purple-500 text-white hover:bg-purple-600' if event.event_type == 'personal'}
                              #{'bg-gray-600 text-white hover:bg-gray-700' if event.event_type == 'work'}
                              #{'bg-orange-500 text-white hover:bg-orange-600' if event.event_type == 'other'}",
-                      style: "height: #{event_height}px; width: calc(#{event_width}% - 2px); left: calc(#{event_left}% + 2px);",
+                      style: "height: #{event_height}px; width: calc(#{event_width}% - 2px); left: calc(#{event_left}% + 2px); z-index: 15;",
                       onclick: "event.stopPropagation();" do %>
                     <div class="font-semibold truncate"><%= event.title %></div>
                     <div class="text-xs opacity-75">
@@ -139,7 +155,7 @@
                   </div>
                 <% else %>
                   <!-- Show + button in top right corner when there are existing events -->
-                  <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                  <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-25">
                     <div class="w-5 h-5 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xs pointer-events-auto"
                          onclick="event.stopPropagation(); createEventAtTime('<%= date.strftime('%Y-%m-%d') %>', <%= hour %>);">
                       +
@@ -167,7 +183,7 @@
         const topPosition = (timeSlotIndex + minutePercentage) * 51; // 50px height + 1px gap
         
         const currentTimeLine = document.createElement('div');
-        currentTimeLine.className = 'absolute left-20 right-0 h-0.5 bg-red-500 z-20 pointer-events-none';
+        currentTimeLine.className = 'absolute left-20 right-0 h-0.5 bg-red-500 z-25 pointer-events-none';
         currentTimeLine.style.top = topPosition + 140 + 'px'; // Account for header height
         
         const timeGrid = document.querySelector('.relative');

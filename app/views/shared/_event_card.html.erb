@@ -15,7 +15,7 @@
     <div class="flex-1">
       <!-- Event Title and Type -->
       <div class="flex items-center space-x-2 mb-2">
-        <%= link_to event_path(event), class: "font-medium text-gray-900 hover:text-blue-600 transition-colors #{'text-sm' if compact}" do %>
+        <%= link_to event_path(event), class: "font-medium text-white hover:text-blue-300 transition-colors #{'text-sm' if compact}" do %>
           <%= event.title %>
         <% end %>
         
@@ -39,7 +39,7 @@
       </div>
 
       <!-- Time Information -->
-      <div class="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+      <div class="flex items-center space-x-4 text-sm text-white mb-2">
         <div class="flex items-center space-x-1">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
